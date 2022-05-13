@@ -1132,6 +1132,123 @@ class HfApi:
         query_dict["filter"] = tuple(filter_tuple)
         return query_dict
 
+    @_deprecate_positional_args
+    def list_spaces(
+        self,
+        *,
+        filter: Union[DatasetFilter, str, Iterable[str], None] = None,
+        author: Optional[str] = None,
+        search: Optional[str] = None,
+        sort: Union[Literal["lastModified"], str, None] = None,
+        direction: Optional[Literal[-1]] = None,
+        limit: Optional[int] = None,
+        full: Optional[bool] = None,
+        use_auth_token: Optional[str] = None,
+    ) -> List[DatasetInfo]:
+        """
+        Get the public list of all the spaces on huggingface.co
+
+        Args:
+            filter ([`SpaceFilter`] or `str` or `Iterable`, *optional*):
+                A string or [`SpaceFilter`] which can be used to identify
+                spaces on the hub.
+            author (`str`, *optional*):
+                A string which identify the author of the returned spaces
+            search (`str`, *optional*):
+                A string that will be contained in the returned spaces.
+            sort (`Literal["lastModified"]` or `str`, *optional*):
+                The key with which to sort the resulting spaces. Possible
+                values are the properties of the `DatasetInfo` class.
+            direction (`Literal[-1]` or `int`, *optional*):
+                Direction in which to sort. The value `-1` sorts by descending
+                order while all other values sort by ascending order.
+            limit (`int`, *optional*):
+                The limit on the number of spaces fetched. Leaving this option
+                to `None` fetches all spaces.
+            full (`bool`, *optional*):
+                Whether to fetch all dataset data, including the `lastModified`.
+            use_auth_token (`bool` or `str`, *optional*):
+                Whether to use the `auth_token` provided from the
+                `huggingface_hub` cli. If not logged in, a valid `auth_token`
+                can be passed in as a string.
+
+        Example usage with the `filter` argument:
+
+        ```python
+        >>> from huggingface_hub import HfApi
+
+        >>> api = HfApi()
+
+        >>> # List all datasets
+        >>> api.list_datasets()
+
+        >>> # Get all valid search arguments
+        >>> args = DatasetSearchArguments()
+
+        >>> # List only the text classification datasets
+        >>> api.list_datasets(filter="task_categories:text-classification")
+        >>> # Using the `DatasetFilter`
+        >>> filt = DatasetFilter(task_categories="text-classification")
+        >>> # With `DatasetSearchArguments`
+        >>> filt = DatasetFilter(task=args.task_categories.text_classification)
+        >>> api.list_models(filter=filt)
+
+        >>> # List only the datasets in russian for language modeling
+        >>> api.list_datasets(
+        ...     filter=("languages:ru", "task_ids:language-modeling")
+        ... )
+        >>> # Using the `DatasetFilter`
+        >>> filt = DatasetFilter(languages="ru", task_ids="language-modeling")
+        >>> # With `DatasetSearchArguments`
+        >>> filt = DatasetFilter(
+        ...     languages=args.languages.ru,
+        ...     task_ids=args.task_ids.language_modeling,
+        ... )
+        >>> api.list_datasets(filter=filt)
+        ```
+
+        Example usage with the `search` argument:
+
+        ```python
+        >>> from huggingface_hub import HfApi
+
+        >>> api = HfApi()
+
+        >>> # List all datasets with "text" in their name
+        >>> api.list_datasets(search="text")
+
+        >>> # List all datasets with "text" in their name made by google
+        >>> api.list_datasets(search="text", author="google")
+        ```
+        """
+        path = f"{self.endpoint}/api/spaces"
+        if use_auth_token:
+            token, name = self._validate_or_retrieve_token(use_auth_token)
+        headers = {"authorization": f"Bearer {token}"} if use_auth_token else None
+        params = {}
+        if filter is not None:
+            if isinstance(filter, DatasetFilter):
+                params = self._unpack_dataset_filter(filter)
+            else:
+                params.update({"filter": filter})
+        if author is not None:
+            params.update({"author": author})
+        if search is not None:
+            params.update({"search": search})
+        if sort is not None:
+            params.update({"sort": sort})
+        if direction is not None:
+            params.update({"direction": direction})
+        if limit is not None:
+            params.update({"limit": limit})
+        if full is not None:
+            if full:
+                params.update({"full": True})
+        r = requests.get(path, params=params, headers=headers)
+        r.raise_for_status()
+        d = r.json()
+        return [DatasetInfo(**x) for x in d]
+
     def list_metrics(self) -> List[MetricInfo]:
         """
         Get the public list of all the metrics on huggingface.co
