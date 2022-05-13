@@ -2144,6 +2144,7 @@ model_info = api.model_info
 list_datasets = api.list_datasets
 dataset_info = api.dataset_info
 
+list_spaces = api.list_spaces
 space_info = api.space_info
 
 repo_info = api.repo_info
