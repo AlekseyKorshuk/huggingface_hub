@@ -1144,7 +1144,7 @@ class HfApi:
         limit: Optional[int] = None,
         full: Optional[bool] = None,
         use_auth_token: Optional[str] = None,
-    ) -> List[DatasetInfo]:
+    ) -> List[SpaceInfo]:
         """
         Get the public list of all the spaces on huggingface.co
 
@@ -1247,7 +1247,7 @@ class HfApi:
         r = requests.get(path, params=params, headers=headers)
         r.raise_for_status()
         d = r.json()
-        return [DatasetInfo(**x) for x in d]
+        return [SpaceInfo(**x) for x in d]
 
     def list_metrics(self) -> List[MetricInfo]:
         """
