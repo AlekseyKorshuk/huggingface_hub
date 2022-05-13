@@ -53,6 +53,7 @@ from .hf_api import (
     list_metrics,
     list_models,
     list_repo_files,
+    list_spaces,
     login,
     logout,
     model_info,
